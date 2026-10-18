@@ -71,19 +71,6 @@ node server.js
 
 模型名称经常更新，填写前到服务商控制台确认当前可用的名称。
 
-## 部署到评审能访问的服务器
-
-评审在国内访问，网页和大模型接口都要放在国内能直接打开的地方。时间紧的推荐做法：
-
-1. 买一台**香港地域**的轻量应用服务器（阿里云、腾讯云都有，学生有优惠），系统选 Ubuntu。香港节点不需要 ICP 备案，大陆可以直接访问。
-2. 安装 Node.js：`curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs`
-3. 把整个文件夹上传到服务器（如 `/opt/shitutong`），在 `server/` 里写好 `config.json`。
-4. 后台运行：`cd /opt/shitutong/server && nohup node server.js > run.log 2>&1 &`（或用 pm2）。
-5. 在云控制台的**防火墙**里放行 8080 端口。
-6. 提交给评审的链接：`http://服务器IP:8080`，并附上评审账号和密码。
-
-如果用大陆服务器并绑定域名，需要先完成 ICP 备案，来不及就直接用 IP 加端口访问。
-
 ## 提交前自查
 
 - [ ] 换一台电脑、用手机流量打开链接，能登录、能加载模型
