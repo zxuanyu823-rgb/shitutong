@@ -1,0 +1,16 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>算法量线评测</title>
+<style>body{font:14px/1.6 system-ui,sans-serif;margin:24px;background:#fff;color:#222}pre{background:#f4f4f4;padding:12px;white-space:pre-wrap}button{font:inherit;padding:6px 14px}</style>
+<h3>拍照建模 · 算法量线评测</h3>
+<p>用题库模型合成“照片”（倾斜、模糊、噪声、光照不均）和带误差的“模型读数”，比较只用模型读数与加上算法量线后的重建成功率。需要通过本地服务器打开（node server/server.js）。</p>
+<label>每题次数 <input id="seeds" type="number" value="3" min="1" max="10" style="width:4em"></label>
+<button id="go">开始评测</button>
+<pre id="out">（未运行）</pre>
+<script type="module">
+document.querySelector('#go').onclick = async () => {
+  const out = document.querySelector('#out'); out.textContent = '运行中，约需一两分钟…';
+  const { run } = await import('./cv-eval.js');
+  out.textContent = await run({ seeds: +document.querySelector('#seeds').value || 3 });
+};
+</script>

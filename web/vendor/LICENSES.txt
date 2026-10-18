@@ -1,0 +1,3 @@
+本目录为第三方开源库的本地副本：
+- three.js r186（three.module.js、three.core.js、OrbitControls.js）—— MIT License，Copyright 2010-2026 three.js authors，https://github.com/mrdoob/three.js
+- Manifold 3.5（manifold.js、manifold.wasm）—— Apache License 2.0，Copyright The Manifold Authors，https://github.com/elalish/manifold

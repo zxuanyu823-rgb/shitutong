@@ -1,0 +1,23 @@
+# 依赖与构建产物
+node_modules/
+android/build/
+*.apk
+*.zip
+web/preview.html
+web/js/package.json
+
+# 密钥与本地配置（不要上传）
+*.keystore
+server/config.json
+
+# 旧备份、内部笔记
+web-1.2-backup/
+给GPT的任务.md
+
+# 训练数据和模型（体积大，可重新生成）
+ml/data/
+ml/runs/
+ml/preview/
+ml/predict/
+.venv/
+__pycache__/

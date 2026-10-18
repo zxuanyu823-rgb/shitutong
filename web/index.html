@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>视图通</title>
+<meta name="description" content="三维模型与三视图联动、错因诊断的工程制图学习智能体">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="css/app.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="seal">视</span><div><b>视图通</b><small>工程制图学习智能体</small></div></div>
+  <label class="picker"><span>模型</span><select id="modelSel"></select></label>
+  <div class="seg" id="modeSeg" role="group" aria-label="学习方式">
+    <button data-mode="learn" class="on" aria-pressed="true">学习</button>
+    <button data-mode="practice" aria-pressed="false">练习</button>
+    <button data-mode="photo" aria-pressed="false">拍照建模</button>
+  </div>
+  <div class="bar-right">
+    <button class="chip" id="aiChip" title="智能体状态">离线讲解</button>
+    <button class="ghost" id="projectsBtn">我的题册</button>
+    <button class="ghost" id="reportBtn">学习报告</button>
+    <button class="ghost" id="settingsBtn" title="设置">设置</button>
+  </div>
+</header>
+
+<nav class="workspace-switch" id="mobileViews" aria-label="查看模型与图纸">
+  <div class="seg" role="tablist" aria-label="工作区视图">
+    <button id="modelTab" role="tab" data-mobile-view="model" aria-controls="modelPanel" aria-selected="true" class="on">三维模型</button>
+    <button id="drawingTab" role="tab" data-mobile-view="drawing" aria-controls="drawingPanel" aria-selected="false" tabindex="-1">三视图</button>
+  </div>
+  <span>点选模型或图线，查看对应关系</span>
+</nav>
+
+<main class="desk">
+  <section class="pane pane-3d" id="modelPanel" aria-label="三维模型">
+    <div class="tools">
+      <div class="group" id="viewBtns">
+        <button data-view="iso" class="on">轴测</button><button data-view="front">主视</button><button data-view="top">俯视</button><button data-view="left">左视</button>
+      </div>
+      <button class="toggle" id="xrayBtn">透视</button>
+      <button class="toggle" id="unfoldBtn">投影面展开</button>
+    </div>
+    <div class="stage" id="stage3d" aria-label="可旋转的三维模型"></div>
+    <div class="hint">拖动旋转 · 双指或滚轮缩放 · 点选棱或面</div>
+  </section>
+
+  <section class="pane pane-2d" id="drawingPanel" aria-label="三视图">
+    <div class="tools">
+      <span class="pane-title">三视图 · 第一角画法</span>
+      <button class="toggle on" id="consBtn">投影连线</button>
+    </div>
+    <div class="sheet" id="sheet">
+      <svg id="drawing" xmlns="http://www.w3.org/2000/svg" aria-label="当前模型的主视图、俯视图和左视图"></svg>
+      <div class="titleblock" id="titleblock"></div>
+    </div>
+    <div class="info" id="info">
+      <div class="info-empty">在三视图里点一条线或一个线框，或在三维模型上点一条棱、一个面，这里会说明它们的对应关系。</div>
+    </div>
+  </section>
+
+  <section class="pane pane-recon" id="recon" hidden>
+    <div class="tools">
+      <span class="pane-title">拍照建模：照片 → 三视图 → 三维</span>
+      <label class="toggle on filebtn">拍照 / 选图<input type="file" id="reconFile" accept="image/*" hidden></label>
+      <button class="toggle" id="reconSample">示例题</button>
+      <button class="toggle" id="reconPaste">粘贴识图结果</button>
+    </div>
+    <div class="recon-body">
+      <div class="recon-side">
+        <div class="recon-photo" id="reconPhoto"><span>拍一道三视图题（正对纸面、只拍题目区域），或者点“示例题”。只给两个视图的补图题也可以。</span></div>
+        <p class="recon-timer" id="reconTimer" role="status" aria-live="off" hidden></p>
+        <ol class="recon-steps" id="reconSteps"></ol>
+      </div>
+      <div class="recon-main">
+        <div class="sheet recon-sheet">
+          <svg id="reconSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="legend"><span class="lg lg-missing">缺少</span><span class="lg lg-extra">多出</span><span class="lg lg-type">虚实不符</span><span class="lg lg-gen">补画</span><button class="toggle" id="reconRerun" hidden>按修改重新生成</button></div>
+        </div>
+        <p class="recon-tip">模型哪里不对？打开助教的“修改模型”，直接描述。也可点图线修正实线、虚线、点画线或删除。</p>
+        <div class="recon-cands" id="reconCands"></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="pane pane-chat" id="chatPanel" aria-label="智能助教">
+    <div class="chat-head"><div><b>智能助教</b><span id="chatMode">离线讲解</span></div><div class="chat-head-actions"><button class="ghost chat-close" id="chatModel" type="button">看模型</button><button class="ghost chat-close" id="chatClose" type="button" aria-label="收起助教">收起</button></div></div>
+    <div class="chat-intent seg" id="chatIntent" role="group" aria-label="对话用途">
+      <button type="button" data-intent="learn" class="on" aria-pressed="true">学习讲解</button>
+      <button type="button" data-intent="edit" aria-pressed="false">修改模型</button>
+    </div>
+    <div class="edit-status" id="editStatus" role="status" aria-live="polite" hidden>直接说出哪里不对，助教会按你的描述修改模型。</div>
+    <div class="edit-toolbar" id="editToolbar" aria-label="模型修改记录" hidden>
+      <div class="edit-history"><span id="editVersion">当前模型</span><button class="ghost" id="editSave" type="button">存入题册</button></div>
+      <div class="edit-actions">
+        <button class="ghost" id="editUndo" type="button" disabled>撤销</button>
+        <button class="ghost" id="editRedo" type="button" disabled>重做</button>
+        <div class="group edit-compare" role="group" aria-label="对比本次修改">
+          <button id="editBefore" type="button" aria-pressed="false" disabled>修改前</button>
+          <button id="editAfter" type="button" aria-pressed="true" class="on" disabled>修改后</button>
+        </div>
+      </div>
+    </div>
+    <div class="msgs" id="msgs" role="log" aria-live="polite" aria-relevant="additions text" aria-label="对话记录"></div>
+    <div class="chips" id="chips"></div>
+    <form class="ask" id="askForm">
+      <textarea id="askInput" rows="1" aria-label="向助教提问" enterkeyhint="send" placeholder="问问题，如：这条为何是虚线？"></textarea>
+      <button type="submit" aria-label="发送消息">发送</button>
+    </form>
+  </aside>
+</main>
+
+<button class="chat-launcher" id="chatOpen" type="button" aria-controls="chatPanel" aria-expanded="false">助教 · 对话改模型</button>
+<div class="chat-backdrop" id="chatBackdrop" hidden></div>
+
+<div class="loading" id="loading"><div class="seal big">视</div><b class="splash-name">视图通</b><p>工程制图学习智能体</p><div class="splash-bar"><i></i></div></div>
+
+<dialog id="settingsDlg">
+  <form method="dialog" class="dlg">
+    <h3>大模型接口</h3>
+    <p class="note" id="serverNote">部署到服务器后由服务器统一配置，评审直接使用即可，无需填写。</p>
+    <label>服务商<select id="cfgPreset">
+      <option value="deepseek">DeepSeek</option>
+      <option value="kimi">Kimi K3（国际版 platform.kimi.ai）</option>
+      <option value="kimicn">Kimi K3（中国版 platform.moonshot.cn）</option>
+      <option value="qwen">通义千问（阿里云百炼）</option>
+      <option value="custom">其他 OpenAI 兼容接口</option>
+    </select></label>
+    <label>接口地址<input id="cfgBase" placeholder="https://api.deepseek.com"></label>
+    <label>模型名称<input id="cfgModel" placeholder="deepseek-chat"></label>
+    <label>API Key<input id="cfgKey" type="password" placeholder="sk-..." autocomplete="off"></label>
+    <h3 style="font-size:14px;margin-top:6px">拍照识图（多模态）</h3>
+    <label>识图用的服务商<select id="cfgVisionPreset">
+      <option value="same">与上面相同</option>
+      <option value="kimi">Kimi K3（国际版 platform.kimi.ai）</option>
+      <option value="kimicn">Kimi K3（中国版 platform.moonshot.cn）</option>
+      <option value="qwen">通义千问（阿里云百炼）</option>
+      <option value="deepseek">DeepSeek</option>
+      <option value="custom">其他 OpenAI 兼容接口</option>
+    </select></label>
+    <div id="visionExtra" hidden>
+      <label>识图接口地址<input id="cfgVisionBase" placeholder="https://api.moonshot.ai/v1"></label>
+      <label>识图 API Key（不填则用上面的）<input id="cfgVisionKey" type="password" placeholder="sk-..." autocomplete="off"></label>
+    </div>
+    <label>多模态模型名称<input id="cfgVision" placeholder="kimi-k3"></label>
+    <p class="note">可以对话用一家、识图用另一家，比如对话用 DeepSeek、识图用 Kimi K3。Kimi 国际版和中国版的密钥不通用，选和你申请密钥的平台一致的那个。</p>
+    <label>拍照建模流程<select id="cfgPhotoMode">
+      <option value="fast">快速：程序量线核对通过就不再反复问大模型（推荐）</option>
+      <option value="thorough">仔细：每一步都让大模型对照照片复核（慢 2～4 倍）</option>
+    </select></label>
+    <label>识图、建模的思考强度<select id="cfgEffort">
+      <option value="low">快（low）</option>
+      <option value="high">均衡（high，推荐）</option>
+      <option value="max">最准（max，最慢）</option>
+    </select></label>
+    <p class="note">对 DeepSeek、Kimi K3、通义千问 Qwen3 系列生效，其他接口不支持时自动忽略。助教对话固定用最快的强度。</p>
+    <h3 style="font-size:14px;margin-top:6px">联网搜索例题（Tavily）</h3>
+    <label>Tavily API Key<input id="cfgTavily" type="password" placeholder="tvly-..." autocomplete="off"></label>
+    <p class="note">模型名称以服务商控制台当前提供的为准。密钥只保存在这台设备上。</p>
+    <h3 style="font-size:14px;margin-top:6px">字体大小</h3>
+    <div class="font-steps" id="fontSteps"></div>
+    <div class="font-row"><span style="font-size:12px">A</span><input type="range" id="fontScale" min="80" max="140" step="5" value="100" aria-label="字体大小"><span style="font-size:18px">A</span><output id="fontScaleVal">100%</output></div>
+    <h3 style="font-size:14px;margin-top:6px">界面背景</h3>
+    <div class="bg-swatches" id="bgSwatches"></div>
+    <label class="ghost filebtn bg-pick">换一张我的图片<input type="file" id="bgFile" accept="image/*" hidden></label>
+    <div class="dlg-btns"><button value="clear" class="ghost" id="cfgClear">清除</button><button value="ok" id="cfgSave">保存</button></div>
+  </form>
+</dialog>
+
+<dialog id="pasteDlg">
+  <form method="dialog" class="dlg">
+    <h3>粘贴识图结果</h3>
+    <p class="note">把视觉模型按识图提示词输出的 JSON 粘贴到这里。</p>
+    <textarea id="pasteText" rows="10" spellcheck="false"></textarea>
+    <div class="dlg-btns"><button value="cancel" class="ghost">取消</button><button value="ok">开始重建</button></div>
+  </form>
+</dialog>
+
+<dialog id="reportDlg">
+  <div class="dlg">
+    <h3>学习报告</h3>
+    <div id="reportBody"></div>
+    <div class="dlg-btns"><button class="ghost" id="reportExport">导出 CSV</button><button class="ghost" id="reportReset">清空记录</button><button id="reportClose">关闭</button></div>
+  </div>
+</dialog>
+
+<dialog id="projectsDlg" aria-labelledby="projectsTitle">
+  <div class="dlg">
+    <h3 id="projectsTitle">我的题册</h3>
+    <p class="note">保存这道题，下次接着查看、讲解和修改。</p>
+    <label for="projectName">题目名称<input id="projectName" maxlength="80" placeholder="例如：带孔台阶块" autocomplete="off"></label>
+    <div class="project-save"><button id="projectSaveCurrent" type="button">保存当前题目</button></div>
+    <div class="project-list" id="projectList" aria-label="已保存的题目"></div>
+    <div class="dlg-btns"><button id="projectClose" type="button">关闭</button></div>
+  </div>
+</dialog>
+
+<div class="login" id="login" hidden>
+  <form class="login-card" id="loginForm">
+    <div class="seal big">视</div>
+    <h2>视图通</h2>
+    <p>工程制图学习智能体 · 评审入口</p>
+    <input id="loginUser" placeholder="账号" autocomplete="username">
+    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password">
+    <button type="submit">进入</button>
+    <p class="err" id="loginErr"></p>
+  </form>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

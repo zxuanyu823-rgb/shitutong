@@ -1,0 +1,13 @@
+{
+  "PORT": 8080,
+  "LLM_BASE_URL": "https://api.deepseek.com",
+  "LLM_MODEL": "deepseek-chat",
+  "LLM_API_KEY": "",
+  "VISION_MODEL": "",
+  "VISION_BASE_URL": "",
+  "VISION_API_KEY": "",
+  "SEARCH_API_KEY": "",
+  "REVIEW_USER": "judge",
+  "REVIEW_PASS": "",
+  "SESSION_SECRET": "把这里换成一串随机长字符"
+}

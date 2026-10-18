@@ -1,0 +1,6 @@
+# Install PyTorch separately first (RTX 50 series needs CUDA 12.8+, see ml/README.md)
+numpy
+opencv-python
+pillow
+onnx
+onnxruntime
